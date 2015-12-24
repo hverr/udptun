@@ -9,7 +9,7 @@ type t = {
 
 let create () =
   let file, name = Tuntap.opentun () in
-  let fd = Fd.create Fd.Kind.Char file (Info.of_string name) in
+  let fd = Fd.create Fd.Kind.Fifo file (Info.of_string name) in
   let reader = Reader.create fd in
   let writer = Writer.create fd in
   {name; reader; writer}
