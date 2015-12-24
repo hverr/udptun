@@ -1,0 +1,18 @@
+OASISFormat: 0.4
+
+Name: udptun
+Version: 0.1
+Synopsis: Tunnel over UDP
+Authors: Henri Verroken <henri@deliquus.com>
+License: GPL
+Plugins: META (0.4), DevFiles (0.4)
+BuildTools: ocamlbuild
+
+Description: Tunnel over UDP
+Homepage: https://www.example.org
+
+Executable udptun
+    Path: bin/
+    MainIs: main.ml
+    CompiledObject: best
+    BuildDepends: cmdliner, core, threads, tuntap, async

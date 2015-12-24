@@ -1,0 +1,12 @@
+# Vim
+.*.sw[a-z]
+
+# OCaml
+_build/
+*.native
+*.byte
+*.docdir
+
+# Oasis
+setup.data
+setup.log

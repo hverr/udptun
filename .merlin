@@ -1,0 +1,9 @@
+S lib
+S bin
+B _build
+B _build/bin
+B _build/lib
+PKG core
+PKG async
+PKG cmdliner
+PKG tuntap
