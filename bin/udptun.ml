@@ -40,7 +40,14 @@ module UdpAsync = struct
     let sendto t data =
       let buf = Iobuf.of_string data in
       let sender = Or_error.ok_exn (Udp.sendto ()) in
-      sender t.fd buf t.address
+      try_with ~extract_exn:true (fun () -> sender t.fd buf t.address)
+      >>| function
+      | Ok () -> ()
+      | Error (Unix.Unix_error (err, _, _)) ->
+          printf "Could not sendto %s: %s\n%!"
+            (Unix.Socket.Address.Inet.to_string t.address)
+            (Core.Std.Unix.error_message  err)
+      | Error e -> raise e
   end
 end
 
