@@ -13,6 +13,6 @@ Homepage: https://www.example.org
 
 Executable udptun
     Path: bin/
-    MainIs: main.ml
+    MainIs: udptun.ml
     CompiledObject: best
     BuildDepends: cmdliner, core, threads, tuntap, async

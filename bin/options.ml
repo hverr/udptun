@@ -21,17 +21,17 @@ let remote_port =
   let flags = ["P"; "remote-port"] in
   Arg.(value & opt int default_port & info flags ~doc)
 
-let term = Term.(const Udptun.main $
-                 local_address $
-                 local_port $
-                 remote_address $
-                 remote_port)
+let term m = Term.(const m $
+                   local_address $
+                   local_port $
+                   remote_address $
+                   remote_port)
 
 let info =
   let doc = "create a udp tunnel on a newly created tun-device" in
   Term.info "udptun" ~doc
 
-let () =
-  match Term.eval (term, info) with
+let eval main =
+  match Term.eval (term main, info) with
   | `Error _ -> exit 1
   | _ -> exit 0

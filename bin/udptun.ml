@@ -38,3 +38,6 @@ let main local_address local_port remote_address remote_port =
   ignore (start_sending ());
   
   never_returns (Scheduler.go ())
+
+let () =
+  Options.eval main
