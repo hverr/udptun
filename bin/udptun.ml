@@ -53,7 +53,7 @@ module UdpAsync = struct
   module Server = struct
     type t = {
       fd : Fd.t;
-      stopper : unit Ivar.t option;
+      stopper : unit Ivar.t;
     }
 
     let create address =
@@ -61,21 +61,14 @@ module UdpAsync = struct
       Unix.Socket.bind socket address
       >>| fun socket -> {
         fd = Unix.Socket.fd socket;
-        stopper = None;
+        stopper = Ivar.create ();
       }
 
     let start t f =
-      let stopper = Ivar.create () in
-      let config = Udp.Config.create ~stop:(Ivar.read stopper) () in
+      let config = Udp.Config.create ~stop:(Ivar.read t.stopper) () in
       Udp.recvfrom_loop ~config t.fd f
-      >>| fun () -> {
-        fd = t.fd;
-        stopper = Some stopper;
-      }
 
-    let stop t = match t.stopper with
-      | None -> raise (Failure "can't stop server that isn't started")
-      | Some stopper -> Ivar.fill stopper ()
+    let stop t = Ivar.fill t.stopper ()
   end
 end
 
