@@ -49,6 +49,34 @@ module UdpAsync = struct
             (Core.Std.Unix.error_message  err)
       | Error e -> raise e
   end
+
+  module Server = struct
+    type t = {
+      fd : Fd.t;
+      stopper : unit Ivar.t option;
+    }
+
+    let create address =
+      let socket = Unix.Socket.(create Type.udp) in
+      Unix.Socket.bind socket address
+      >>| fun socket -> {
+        fd = Unix.Socket.fd socket;
+        stopper = None;
+      }
+
+    let start t f =
+      let stopper = Ivar.create () in
+      let config = Udp.Config.create ~stop:(Ivar.read stopper) () in
+      Udp.recvfrom_loop ~config t.fd f
+      >>| fun () -> {
+        fd = t.fd;
+        stopper = Some stopper;
+      }
+
+    let stop t = match t.stopper with
+      | None -> raise (Failure "can't stop server that isn't started")
+      | Some stopper -> Ivar.fill stopper ()
+  end
 end
 
 let to_address ip port =
@@ -56,6 +84,15 @@ let to_address ip port =
   Unix.Socket.Address.Inet.create a ~port
 
 let main local_address local_port remote_address remote_port =
+  let start_receiving () =
+    let handle_packet buf addr =
+      printf "Got packet from %s\n%!"
+        (Unix.Socket.Address.Inet.to_string addr)
+    in
+    let address = to_address local_address local_port in
+    UdpAsync.Server.create address >>= fun server ->
+    UdpAsync.Server.start server handle_packet
+  in
   let start_sending () =
     let address = to_address remote_address remote_port in
     UdpAsync.Client.connect address >>= (fun client ->
@@ -68,6 +105,7 @@ let main local_address local_port remote_address remote_port =
       keep_sending ();
     )
   in
+  ignore (start_receiving ());
   ignore (start_sending ());
   
   never_returns (Scheduler.go ())
