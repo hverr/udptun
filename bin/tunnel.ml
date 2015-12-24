@@ -15,7 +15,7 @@ module Txer = struct
       { fd; address }
     )
 
-  let sendto t data =
+  let send_packet t data =
     let buf = Iobuf.of_string data in
     let sender = Or_error.ok_exn (Udp.sendto ()) in
     try_with ~extract_exn:true (fun () -> sender t.fd buf t.address)
