@@ -20,7 +20,7 @@ let main local_address local_port remote_address remote_port =
     Tunnel.Txer.connect address >>= (fun txer ->
       let rec keep_sending () =
         printf "Sending message\n%!";
-        Tunnel.Txer.send_packet txer "Hello World!" >>= fun () ->
+        Tunnel.Txer.send_string txer "Hello World!" >>= fun () ->
         after (Time.Span.of_sec 1.0) >>= fun () ->
         keep_sending ()
       in

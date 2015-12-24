@@ -7,6 +7,8 @@ module Txer = struct
     address : Unix.Socket.Address.Inet.t;
   }
 
+  let packet_size = Udp.default_capacity
+
   let connect address =
     let socket = Unix.Socket.(create Type.udp) in
     Unix.Socket.connect socket address
@@ -15,8 +17,7 @@ module Txer = struct
       { fd; address }
     )
 
-  let send_packet t data =
-    let buf = Iobuf.of_string data in
+  let send_packet t buf =
     let sender = Or_error.ok_exn (Udp.sendto ()) in
     try_with ~extract_exn:true (fun () -> sender t.fd buf t.address)
     >>| function
@@ -26,6 +27,18 @@ module Txer = struct
           (Unix.Socket.Address.Inet.to_string t.address)
           (Core.Std.Unix.error_message  err)
     | Error e -> raise e
+
+  let rec send_buf t buf = match Iobuf.length buf with
+    | 0 -> return ()
+    | l -> begin
+      let s = min l packet_size in
+      let head = Iobuf.sub_shared ~pos:0 ~len:s buf in
+      let tail = Iobuf.sub_shared ~pos:s ~len:(l - s) buf in
+      send_packet t head >>= fun () ->
+      send_buf t tail
+    end
+
+  let send_string t data = send_buf t (Iobuf.of_string data)
 end
 
 module Rxer = struct
