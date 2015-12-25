@@ -24,7 +24,7 @@ module Destination = struct
       let addr = Array.get entry.addresses 0 in
       Unix.Socket.Address.Inet.create addr ~port:t.port
     end
-    
+
   let of_json json =
     let open Yojson.Basic.Util in
     let port = match json |> member "port" with
