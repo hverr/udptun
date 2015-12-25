@@ -22,8 +22,8 @@ let to_address ip port =
   let a = Unix.Inet_addr.of_string ip in
   Unix.Socket.Address.Inet.create a ~port
 
-let main local_address local_port remote_address remote_port =
-  let tundev = Tundev.create () in
+let main local_address local_port remote_address remote_port dev =
+  let tundev = Tundev.create dev in
   let start_receiving () =
     let address = to_address local_address local_port in
     Tunnel.Rxer.create address >>= fun rxer ->

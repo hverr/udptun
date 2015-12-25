@@ -21,11 +21,17 @@ let remote_port =
   let flags = ["P"; "remote-port"] in
   Arg.(value & opt int default_port & info flags ~doc)
 
+let device =
+  let doc = "The name of the created tun device." in
+  let flags = ["d"; "device"] in
+  Arg.(value & opt string "tun%d" & info flags ~doc)
+
 let term m = Term.(const m $
                    local_address $
                    local_port $
                    remote_address $
-                   remote_port)
+                   remote_port $
+                   device)
 
 let info =
   let doc = "create a udp tunnel on a newly created tun-device" in

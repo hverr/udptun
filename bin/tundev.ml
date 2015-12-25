@@ -7,8 +7,8 @@ type t = {
   writer : Writer.t;
 }
 
-let create () =
-  let file, name = Tuntap.opentun () in
+let create devname =
+  let file, name = Tuntap.opentun ~devname () in
   let fd = Fd.create Fd.Kind.Fifo file (Info.of_string name) in
   let reader = Reader.create fd in
   let writer = Writer.create fd in
