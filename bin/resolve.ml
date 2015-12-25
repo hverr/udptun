@@ -46,6 +46,9 @@ let parse str =
   let f = fun (tunip, dst) -> (tunip, Destination.of_json dst) in
   json |> member "nodes" |> to_assoc |> List.map ~f
 
+let resolve ~list ipv4 =
+  List.find list ~f:(fun (x, _) -> ipv4 = x)
+
 let fetch_all url =
   fetch url >>| parse
 
