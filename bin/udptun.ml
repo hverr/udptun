@@ -34,13 +34,18 @@ let host_to_inet host port =
 
 let main local_address local_port remote_host remote_port dev =
   let tundev = Tundev.create dev in
+  Core.Std.printf "Created device %s\n%!" (Tundev.name tundev);
   let start_receiving () =
     let address = addr_to_inet local_address local_port in
+    Core.Std.printf "Started listening on %s\n%!"
+      (Unix.Socket.Address.Inet.to_string address);
     Tunnel.Rxer.create address >>= fun rxer ->
     copy_rxer_to_writer rxer (Tundev.writer tundev)
   in
   let start_sending () =
     let address = host_to_inet remote_host remote_port in
+    Core.Std.printf "Started sending to %s\n%!"
+      (Unix.Socket.Address.Inet.to_string address);
     Tunnel.Txer.connect address >>= fun txer ->
     copy_reader_to_txer (Tundev.reader tundev) txer
   in
