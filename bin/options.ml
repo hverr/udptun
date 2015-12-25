@@ -11,8 +11,8 @@ let local_port =
   let doc = "The port to listen on." in
   Arg.(value & opt int default_port & info ["p"; "local-port"] ~doc)
 
-let remote_address =
-  let doc = "The remote address to connect to." in
+let remote_host =
+  let doc = "The remote host to connect to." in
   let flags = ["A"; "remote-address"] in
   Arg.(required & opt (some string) None & info flags ~doc)
 
@@ -29,7 +29,7 @@ let device =
 let term m = Term.(const m $
                    local_address $
                    local_port $
-                   remote_address $
+                   remote_host $
                    remote_port $
                    device)
 

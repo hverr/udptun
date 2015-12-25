@@ -18,19 +18,29 @@ let copy_rxer_to_writer rxer w =
   let f buf addr = Writer.write w (Iobuf.to_string buf) in
   Tunnel.Rxer.start rxer f
 
-let to_address ip port =
+let addr_to_inet ip port =
   let a = Unix.Inet_addr.of_string ip in
   Unix.Socket.Address.Inet.create a ~port
 
-let main local_address local_port remote_address remote_port dev =
+let host_to_inet host port =
+  let open Core.Std.Unix.Host in
+  let entry = getbyname_exn host in
+  match Array.length entry.addresses with
+  | 0 -> raise (Failure ("No host with name " ^ host))
+  | _ -> begin
+    let addr = Array.get entry.addresses 0 in
+    Unix.Socket.Address.Inet.create addr ~port
+  end
+
+let main local_address local_port remote_host remote_port dev =
   let tundev = Tundev.create dev in
   let start_receiving () =
-    let address = to_address local_address local_port in
+    let address = addr_to_inet local_address local_port in
     Tunnel.Rxer.create address >>= fun rxer ->
     copy_rxer_to_writer rxer (Tundev.writer tundev)
   in
   let start_sending () =
-    let address = to_address remote_address remote_port in
+    let address = host_to_inet remote_host remote_port in
     Tunnel.Txer.connect address >>= fun txer ->
     copy_reader_to_txer (Tundev.reader tundev) txer
   in
