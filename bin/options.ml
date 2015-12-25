@@ -1,14 +1,13 @@
 open Core.Std
 open Cmdliner
 
-let default_port = 7777
-
 let local_address =
   let doc = "The address to listen on." in
   Arg.(value & opt string "0.0.0.0" & info ["a"; "local-address"] ~doc)
 
 let local_port =
   let doc = "The port to listen on." in
+  let default_port = Resolve.Destination.default_port in
   Arg.(value & opt int default_port & info ["p"; "local-port"] ~doc)
 
 let remote_host =
@@ -19,6 +18,7 @@ let remote_host =
 let remote_port =
   let doc = "The remote port to connect to." in
   let flags = ["P"; "remote-port"] in
+  let default_port = Resolve.Destination.default_port in
   Arg.(value & opt int default_port & info flags ~doc)
 
 let device =
