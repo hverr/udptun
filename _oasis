@@ -15,4 +15,5 @@ Executable udptun
     Path: bin/
     MainIs: udptun.ml
     CompiledObject: best
-    BuildDepends: cmdliner, core, threads, tuntap, async
+    BuildDepends: cmdliner, core, threads, tuntap, async, cohttp,
+                  cohttp.async, yojson
