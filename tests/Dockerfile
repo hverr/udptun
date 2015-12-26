@@ -7,3 +7,6 @@ RUN apt-get update && apt-get install -y \
 
 ADD udptun /usr/local/bin/udptun
 RUN chmod 0755 /usr/local/bin/udptun
+
+RUN mkdir -p /etc/udptun
+ADD genhosts.json.sh /etc/udptun/genhosts.json.sh
