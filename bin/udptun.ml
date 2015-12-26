@@ -1,16 +1,14 @@
 open Core.Std
 open Async.Std
 
-let copy_reader_to_txer r txer =
-  let buf = String.create Tunnel.Txer.packet_size in
+let copy_packets_to_txer dev txer =
   let rec copier () =
-    Reader.read r buf >>= function
-    | `Eof -> return ()
-    | `Ok l -> begin
-      let iobuf = Iobuf.(sub_shared ~len:l (of_string buf)) in
+    Tundev.read_packet dev >>= fun packet ->
+      let iobuf = Iobuf.of_string (Tundev.Packet.raw packet) in
+      printf "Got packet for %s\n%!"
+        (Unix.Inet_addr.to_string (Tundev.Packet.destination packet));
       Tunnel.Txer.send_buf txer iobuf >>= fun () ->
       copier ()
-    end
   in
   copier ()
 
@@ -47,11 +45,11 @@ let main local_address local_port remote_host remote_port dev =
     Core.Std.printf "Started sending to %s\n%!"
       (Unix.Socket.Address.Inet.to_string address);
     Tunnel.Txer.connect address >>= fun txer ->
-    copy_reader_to_txer (Tundev.reader tundev) txer
+    copy_packets_to_txer tundev txer
   in
   ignore (start_receiving ());
   ignore (start_sending ());
-  
+
   never_returns (Scheduler.go ())
 
 let () =
