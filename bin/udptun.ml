@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-let copy_packets_to_txer resolver dev txer =
+let handle_outgoing resolver dev txer =
   let rec copier () =
     Tundev.read_packet dev >>= fun packet ->
     let iobuf = Iobuf.of_string (Tundev.Packet.raw packet) in
@@ -26,7 +26,7 @@ let copy_packets_to_txer resolver dev txer =
   in
   copier ()
 
-let copy_rxer_to_writer rxer w =
+let handle_incoming rxer w =
   let f buf addr = Writer.write w (Iobuf.to_string buf) in
   Tunnel.Rxer.start rxer f
 
@@ -52,13 +52,13 @@ let main local_address local_port
     Core.Std.printf "Started listening on %s\n%!"
       (Unix.Socket.Address.Inet.to_string address);
     Tunnel.Rxer.create address >>= fun rxer ->
-    copy_rxer_to_writer rxer (Tundev.writer tundev)
+    handle_incoming rxer (Tundev.writer tundev)
   in
   let start_sending () =
     setup_resolver remote_host remote_port hosts_file
     >>= fun resolver ->
     let txer = Tunnel.Txer.create () in
-    copy_packets_to_txer resolver tundev txer
+    handle_outgoing resolver tundev txer
   in
   ignore (start_receiving ());
   ignore (start_sending ());
