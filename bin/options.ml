@@ -11,15 +11,21 @@ let local_port =
   Arg.(value & opt int default_port & info ["p"; "local-port"] ~doc)
 
 let remote_host =
-  let doc = "The remote host to connect to." in
+  let doc = "The remote host to connect to (for one-to-one tunnels)." in
   let flags = ["A"; "remote-address"] in
-  Arg.(required & opt (some string) None & info flags ~doc)
+  Arg.(value & opt (some string) None & info flags ~doc)
 
 let remote_port =
-  let doc = "The remote port to connect to." in
+  let doc = "The remote port to connect to. (for one-to-one tunnels)." in
   let flags = ["P"; "remote-port"] in
   let default_port = Resolve.Destination.default_port in
   Arg.(value & opt int default_port & info flags ~doc)
+
+let hosts_file =
+  let doc = "File containing the remote hosts to connect to. (for " ^
+    "one-to-many tunnels)." in
+  let flags = ["hosts-file"] in
+  Arg.(value & opt (some string) None & info flags ~doc)
 
 let device =
   let doc = "The name of the created tun device." in
@@ -31,6 +37,7 @@ let term m = Term.(const m $
                    local_port $
                    remote_host $
                    remote_port $
+                   hosts_file $
                    device)
 
 let info =

@@ -1,14 +1,28 @@
 open Core.Std
 open Async.Std
 
-let copy_packets_to_txer dev txer =
+let copy_packets_to_txer resolver dev txer =
   let rec copier () =
     Tundev.read_packet dev >>= fun packet ->
-      let iobuf = Iobuf.of_string (Tundev.Packet.raw packet) in
-      printf "Got packet for %s\n%!"
-        (Unix.Inet_addr.to_string (Tundev.Packet.destination packet));
-      Tunnel.Txer.send_buf txer iobuf >>= fun () ->
-      copier ()
+    let iobuf = Iobuf.of_string (Tundev.Packet.raw packet) in
+    printf "Got packet for %s\n%!"
+      (packet |> Tundev.Packet.destination |>
+      Unix.Inet_addr.inet4_addr_of_int32 |>
+      Unix.Inet_addr.to_string);
+    let _send packet = packet |>
+      Tundev.Packet.destination |>
+      Resolve.resolve resolver |> function
+      | None -> return (printf "No destination for %s\n%!"
+          (Tundev.Packet.destination packet |>
+          Unix.Inet_addr.inet4_addr_of_int32 |>
+          Unix.Inet_addr.to_string))
+      | Some d -> begin
+        let addr = Resolve.Destination.to_inet d in
+        Tunnel.Txer.send_buf txer addr iobuf
+      end
+    in
+    _send packet >>=
+    copier
   in
   copier ()
 
@@ -30,7 +44,17 @@ let host_to_inet host port =
     Unix.Socket.Address.Inet.create addr ~port
   end
 
-let main local_address local_port remote_host remote_port dev =
+let setup_resolver remote_host remote_port hosts_file =
+  match (remote_host, hosts_file) with
+  | (Some host, None) -> Resolve.from_host host remote_port
+  | (None, Some file) -> raise (Failure "Not implemented.")
+  | _ -> raise (Failure ("You must choose exactly one method to " ^
+                         "resolve destinations."))
+
+let main local_address local_port
+         remote_host remote_port
+         hosts_file
+         dev =
   let tundev = Tundev.create dev in
   Core.Std.printf "Created device %s\n%!" (Tundev.name tundev);
   let start_receiving () =
@@ -41,11 +65,10 @@ let main local_address local_port remote_host remote_port dev =
     copy_rxer_to_writer rxer (Tundev.writer tundev)
   in
   let start_sending () =
-    let address = host_to_inet remote_host remote_port in
-    Core.Std.printf "Started sending to %s\n%!"
-      (Unix.Socket.Address.Inet.to_string address);
-    Tunnel.Txer.connect address >>= fun txer ->
-    copy_packets_to_txer tundev txer
+    setup_resolver remote_host remote_port hosts_file
+    >>= fun resolver ->
+    let txer = Tunnel.Txer.create () in
+    copy_packets_to_txer resolver tundev txer
   in
   ignore (start_receiving ());
   ignore (start_sending ());

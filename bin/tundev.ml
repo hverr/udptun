@@ -3,7 +3,7 @@ open Async.Std
 
 module Packet = struct
   type t = {
-    destination : Unix.Inet_addr.t;
+    destination : int32;
     raw : string;
   }
 
@@ -40,14 +40,13 @@ let _read_ipv4 t hd =
       _source : 32;
       dest : 32 : bigendian
     |} -> begin
-      let addr = Unix.Inet_addr.inet4_addr_of_int32 dest in
       let r = total_length - (Bitstring.bitstring_length hd)/8 in
       let body = String.create r in
       Reader.really_read t.reader body >>| function
       | `Eof _ -> raise (Failure "EOF")
       | `Ok ->
         let full = (Bitstring.string_of_bitstring hd) ^ body in
-        Packet.create addr full
+        Packet.create dest full
     end
   | {| _ |} -> raise (Failure "Could not read IPv4 packet")
 
