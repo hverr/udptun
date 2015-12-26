@@ -34,16 +34,6 @@ let addr_to_inet ip port =
   let a = Unix.Inet_addr.of_string ip in
   Unix.Socket.Address.Inet.create a ~port
 
-let host_to_inet host port =
-  let open Core.Std.Unix.Host in
-  let entry = getbyname_exn host in
-  match Array.length entry.addresses with
-  | 0 -> raise (Failure ("No host with name " ^ host))
-  | _ -> begin
-    let addr = Array.get entry.addresses 0 in
-    Unix.Socket.Address.Inet.create addr ~port
-  end
-
 let setup_resolver remote_host remote_port hosts_file =
   match (remote_host, hosts_file) with
   | (Some host, None) -> Resolve.from_host host remote_port
