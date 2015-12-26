@@ -41,8 +41,6 @@ let _read_ipv4 t hd =
       dest : 32 : bigendian
     |} -> begin
       let addr = Unix.Inet_addr.inet4_addr_of_int32 dest in
-      Core.Std.printf "Total length: %d\n" total_length;
-      assert (total_length > 0);
       let r = total_length - (Bitstring.bitstring_length hd)/8 in
       let body = String.create r in
       Reader.really_read t.reader body >>| function
