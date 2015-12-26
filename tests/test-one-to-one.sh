@@ -1,15 +1,22 @@
 #!/bin/bash
 
+
+if [ "$1" = "clean" ]; then
+    set -x
+	docker stop udptun1
+	docker stop udptun2
+	docker rm udptun1
+	docker rm udptun2
+	exit
+elif [ -n "$1" ]; then
+    echo "unknown command: $1" >&2
+    exit 1
+fi
+
 set -ex
 
 # Compile and build container
-pushd ..
 make
-popd
-cat ../udptun.native > udptun
-chmod 0755 udptun
-docker build -t udptun .
-rm udptun
 
 # Create dockers
 docker run -itd --name udptun1 --cap-add=NET_ADMIN --device=/dev/net/tun udptun /bin/bash
@@ -30,5 +37,5 @@ docker exec udptun2 ping -W 10 -c 10 192.168.111.1
 
 # Clean up
 if [ "$1" != "--no-clean" ]; then
-    ./clean.sh
+    "$0" clean
 fi
