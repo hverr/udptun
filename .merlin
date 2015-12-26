@@ -10,3 +10,5 @@ PKG tuntap
 PKG cohttp
 PKG cohttp.async
 PKG yojson
+PKG bitstring
+PKG ppx_bitstring.match
