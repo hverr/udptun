@@ -37,7 +37,7 @@ let addr_to_inet ip port =
 let setup_resolver remote_host remote_port hosts_file =
   match (remote_host, hosts_file) with
   | (Some host, None) -> Resolve.from_host host remote_port
-  | (None, Some file) -> raise (Failure "Not implemented.")
+  | (None, Some file) -> Resolve.from_file file
   | _ -> raise (Failure ("You must choose exactly one method to " ^
                          "resolve destinations."))
 

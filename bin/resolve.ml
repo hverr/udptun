@@ -40,10 +40,6 @@ type t = (Int32.t * Destination.t) list
 
 let wildcard = Int32.zero
 
-let from_host host port =
-  Destination.of_host_and_port host port >>| fun dest ->
-  [(wildcard, dest)]
-
 let fetch url =
   Client.get (Uri.of_string url) >>= fun (r, b) ->
     match r |> Response.status |> Code.code_of_status with
@@ -54,13 +50,21 @@ let parse str =
   let json = Yojson.Basic.from_string str in
   let open Yojson.Basic.Util in
   let f = fun (tunip, dst) ->
-    (Unix.Inet_addr.of_string tunip, Destination.of_json dst)
+    (tunip |> Unix.Inet_addr.of_string
+           |> Unix.Inet_addr.inet4_addr_to_int32_exn,
+    Destination.of_json dst)
   in
   let resolver = json |> member "nodes" |> to_assoc |> List.map ~f in
   let dests = List.map ~f:(fun (_, dst) -> dst) resolver in
   Deferred.all dests >>|
   List.map2_exn resolver ~f:(fun (x, _) y -> (x, y))
 
+let from_host host port =
+  Destination.of_host_and_port host port >>| fun dest ->
+  [(wildcard, dest)]
+
+let from_file filename =
+  Reader.file_contents filename >>= parse
 
 let resolve t ipv4 =
   match List.find t ~f:(fun (x, _) -> x = wildcard || ipv4 = x) with
