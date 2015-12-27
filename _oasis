@@ -17,4 +17,4 @@ Executable udptun
     CompiledObject: best
     BuildDepends: cmdliner, core, threads, tuntap, async, cohttp,
                   cohttp.async, yojson, camlp4,
-                  bitstring, ppx_bitstring.match
+                  bitstring, ppx_bitstring.match, tcpip
