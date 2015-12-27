@@ -45,7 +45,7 @@ module V4 = struct
 	construct_int_be_unsigned buf t.protocol 8 e;
 	construct_int_be_unsigned buf t.chksum 16 e;
 	construct_int32_be_unsigned buf t.src 32 e;
-	construct_int32_be_unsigned buf t.src 32 e;
+	construct_int32_be_unsigned buf t.dst 32 e;
 	Buffer.contents buf
 
   let calc_chksum t =
