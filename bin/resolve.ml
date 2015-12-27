@@ -62,6 +62,9 @@ let parse str =
   Deferred.all dests >>|
   List.map2_exn resolver ~f:(fun (x, _) y -> (x, y))
 
+let fetch_all url =
+  fetch url >>= parse
+
 let from_host host port =
   let updater, _ = Pipe.create () in
   Destination.of_host_and_port host port >>| fun dest ->
@@ -72,6 +75,18 @@ let from_file filename =
   Reader.file_contents filename >>= parse >>| fun hosts ->
   { hosts; updater }
 
+let rec start_fetching t ~interval url w =
+  fetch_all url >>= fun hosts ->
+  Pipe.write w {t with hosts} >>= fun () ->
+  after interval >>= fun () ->
+  start_fetching t ~interval url w
+
+let from_url ~interval url =
+  let updater, w = Pipe.create () in
+  fetch_all url >>| fun hosts ->
+  let t = {hosts; updater } in
+  ignore (start_fetching t ~interval url w); t
+
 let resolve t ipv4 =
   match List.find t.hosts ~f:(fun (x, _) -> x = wildcard || ipv4 = x) with
   | None -> None
@@ -79,12 +94,3 @@ let resolve t ipv4 =
 
 let update t =
   Pipe.read t.updater
-
-let fetch_all url =
-  fetch url >>= parse
-
-let rec start_fetching ~interval url w =
-  fetch_all url >>=
-  Pipe.write w >>= fun () ->
-  after interval >>= fun () ->
-  start_fetching ~interval url w
