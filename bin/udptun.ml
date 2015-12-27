@@ -30,7 +30,7 @@ let rec handle_outgoing ?pending_update ?pending_packet
           Unix.Inet_addr.to_string))
       | Some d -> begin
         let addr = Resolve.Destination.to_inet d in
-        Tunnel.Txer.send_buf txer addr iobuf
+        Tunnel.Txer.send_packet txer addr iobuf
       end
     in
     _send packet >>= fun () ->

@@ -18,16 +18,6 @@ module Txer = struct
           (Unix.Socket.Address.Inet.to_string addr)
           (Core.Std.Unix.error_message  err)
     | Error e -> raise e
-
-  let rec send_buf t addr buf = match Iobuf.length buf with
-    | 0 -> return ()
-    | l -> begin
-      let s = min l packet_size in
-      let head = Iobuf.sub_shared ~pos:0 ~len:s buf in
-      let tail = Iobuf.sub_shared ~pos:s ~len:(l - s) buf in
-      send_packet t addr head >>= fun () ->
-      send_buf t addr tail
-    end
 end
 
 module Rxer = struct
