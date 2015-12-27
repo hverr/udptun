@@ -36,7 +36,10 @@ module Destination = struct
     of_host_and_port host port
 end
 
-type t = (Int32.t * Destination.t) list
+type t = {
+  hosts : (Int32.t * Destination.t) list;
+  updater : t Pipe.Reader.t;
+}
 
 let wildcard = Int32.zero
 
@@ -60,16 +63,22 @@ let parse str =
   List.map2_exn resolver ~f:(fun (x, _) y -> (x, y))
 
 let from_host host port =
+  let updater, _ = Pipe.create () in
   Destination.of_host_and_port host port >>| fun dest ->
-  [(wildcard, dest)]
+  {hosts = [(wildcard, dest)]; updater}
 
 let from_file filename =
-  Reader.file_contents filename >>= parse
+  let updater, _ = Pipe.create () in
+  Reader.file_contents filename >>= parse >>| fun hosts ->
+  { hosts; updater }
 
 let resolve t ipv4 =
-  match List.find t ~f:(fun (x, _) -> x = wildcard || ipv4 = x) with
+  match List.find t.hosts ~f:(fun (x, _) -> x = wildcard || ipv4 = x) with
   | None -> None
   | Some (source, dest) -> Some dest
+
+let update t =
+  Pipe.read t.updater
 
 let fetch_all url =
   fetch url >>= parse
