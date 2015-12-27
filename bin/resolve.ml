@@ -47,7 +47,8 @@ let fetch url =
   Client.get (Uri.of_string url) >>= fun (r, b) ->
     match r |> Response.status |> Code.code_of_status with
     | 200 -> Body.to_string b
-    | _ -> raise (Failure ("Could not fetch " ^ url))
+    | status -> raise (Failure
+        (sprintf "Could not fetch %s: HTTP %d" url status))
 
 let parse str =
   let json = Yojson.Basic.from_string str in
@@ -76,8 +77,12 @@ let from_file filename =
   { hosts; updater }
 
 let rec start_fetching t ~interval url w =
-  fetch_all url >>= fun hosts ->
-  Pipe.write w {t with hosts} >>= fun () ->
+  try_with (fun () -> fetch_all url) >>= (function
+  | Error e ->
+    return (printf "Could not fetch %s: %s\n" url
+      (Exn.to_string e))
+  | Ok hosts -> Pipe.write w {t with hosts}
+  ) >>= fun () ->
   after interval >>= fun () ->
   start_fetching t ~interval url w
 
