@@ -31,9 +31,9 @@ IP2=$(docker inspect udptun2 | jq -r ".[0].NetworkSettings.IPAddress")
 IP3=$(docker inspect udptun3 | jq -r ".[0].NetworkSettings.IPAddress")
 
 # Create docker to serve hosts file
-docker run -d --name udptun_hosts sebp/lighttpd
+docker run -d --name udptun_hosts nginx
 IP_HOSTS=$(docker inspect udptun_hosts | jq -r ".[0].NetworkSettings.IPAddress")
-docker exec -i udptun_hosts /bin/sh -c 'cat > /var/www/localhost/htdocs/hosts.json' <<EOF
+docker exec -i udptun_hosts /bin/sh -c 'cat > /usr/share/nginx/html/hosts.json' <<EOF
 {
   nodes : {
     "192.168.111.1" : { "host" : "$IP1" },
@@ -63,7 +63,7 @@ docker exec udptun2 ping -W 1 -c 3 192.168.111.1
 ! docker exec udptun3 ping -W 1 -c 3 192.168.111.2
 
 # Add 192.168.111.3 to hosts file
-docker exec -i udptun_hosts /bin/sh -c 'cat > /var/www/localhost/htdocs/hosts.json' <<EOF
+docker exec -i udptun_hosts /bin/sh -c 'cat > /usr/share/nginx/html/hosts.json' <<EOF
 {
   nodes : {
     "192.168.111.1" : { "host" : "$IP1" },
@@ -72,6 +72,7 @@ docker exec -i udptun_hosts /bin/sh -c 'cat > /var/www/localhost/htdocs/hosts.js
   }
 }
 EOF
+curl "$HOSTS_URL"
 
 # Give udptun some time to update
 sleep 2
