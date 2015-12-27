@@ -47,6 +47,9 @@ docker exec -d udptun1 /usr/local/bin/udptun --hosts-file "$HOSTS_FILE" -d udptu
 docker exec -d udptun2 /usr/local/bin/udptun --hosts-file "$HOSTS_FILE" -d udptun
 docker exec -d udptun3 /usr/local/bin/udptun --hosts-file "$HOSTS_FILE" -d udptun
 
+# Give applications some time to create network devices
+sleep 1
+
 # Configure network devices
 docker exec udptun1 ifconfig udptun 192.168.111.1 netmask 255.255.255.0
 docker exec udptun2 ifconfig udptun 192.168.111.2 netmask 255.255.255.0

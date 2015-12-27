@@ -28,6 +28,9 @@ IP2=$(docker inspect udptun2 | jq -r ".[0].NetworkSettings.IPAddress")
 docker exec -d udptun1 /usr/local/bin/udptun -A "$IP2" -d udptun
 docker exec -d udptun2 /usr/local/bin/udptun -A "$IP1" -d udptun
 
+# Give applications some time to create network devices
+sleep 1
+
 # Configure network devices
 docker exec udptun1 ifconfig udptun 192.168.111.1 netmask 255.255.255.0
 docker exec udptun2 ifconfig udptun 192.168.111.2 netmask 255.255.255.0
