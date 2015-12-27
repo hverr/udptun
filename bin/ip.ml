@@ -34,7 +34,7 @@ module V4 = struct
 	let buf = Buffer.create () in
 	let e = Failure "Can't create bitstring" in
 	construct_int_be_unsigned buf 4 4 e; (* version *)
-	construct_int_be_unsigned buf 0 4 e; (* IHL *)
+	construct_int_be_unsigned buf 5 4 e; (* IHL *)
 	construct_int_be_unsigned buf t.dscp 6 e;
 	construct_int_be_unsigned buf t.ecn 2 e;
 	construct_int_be_unsigned buf total_len 16 e;
