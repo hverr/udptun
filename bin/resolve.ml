@@ -72,7 +72,7 @@ let resolve t ipv4 =
   | Some (source, dest) -> Some dest
 
 let fetch_all url =
-  fetch url >>| parse
+  fetch url >>= parse
 
 let rec start_fetching ~interval url w =
   fetch_all url >>=
