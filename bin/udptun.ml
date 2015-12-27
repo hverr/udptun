@@ -45,16 +45,22 @@ let addr_to_inet ip port =
   let a = Unix.Inet_addr.of_string ip in
   Unix.Socket.Address.Inet.create a ~port
 
-let setup_resolver remote_host remote_port hosts_file =
-  match (remote_host, hosts_file) with
-  | (Some host, None) -> Resolve.from_host host remote_port
-  | (None, Some file) -> Resolve.from_file file
+let setup_resolver ~remote_host ~remote_port
+                   ~hosts_file
+                   ~hosts_url ~hosts_url_interval =
+  match (remote_host, hosts_file, hosts_url) with
+  | (Some host, None, None) -> Resolve.from_host host remote_port
+  | (None, Some file, None) -> Resolve.from_file file
+  | (None, None, Some url)  ->
+    let i = Time.Span.of_sec hosts_url_interval in
+    Resolve.from_url i url
   | _ -> raise (Failure ("You must choose exactly one method to " ^
                          "resolve destinations."))
 
 let main local_address local_port
          remote_host remote_port
          hosts_file
+         hosts_url hosts_url_interval
          dev =
   let tundev = Tundev.create dev in
   Core.Std.printf "Created device %s\n%!" (Tundev.name tundev);
@@ -66,7 +72,9 @@ let main local_address local_port
     handle_incoming rxer (Tundev.writer tundev)
   in
   let start_sending () =
-    setup_resolver remote_host remote_port hosts_file
+    setup_resolver ~remote_host ~remote_port
+                   ~hosts_file
+                   ~hosts_url ~hosts_url_interval
     >>= fun resolver ->
     let txer = Tunnel.Txer.create () in
     handle_outgoing resolver tundev txer
