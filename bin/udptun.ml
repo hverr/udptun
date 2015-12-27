@@ -2,35 +2,34 @@ open Core.Std
 open Async.Std
 
 let rec handle_outgoing resolver dev txer =
-  Deferred.any [
-    begin
-      Resolve.update resolver >>= function
+  choose [
+    choice (Resolve.update resolver) (function
       | `Eof -> raise (Failure "Resolver was closed")
-      | `Ok resolver -> return resolver
-    end;
-    begin
-      Tundev.read_packet dev >>= fun packet ->
-      let iobuf = Iobuf.of_string (Tundev.Packet.raw packet) in
-      printf "Got packet for %s\n%!"
-        (packet |> Tundev.Packet.destination |>
-        Unix.Inet_addr.inet4_addr_of_int32 |>
-        Unix.Inet_addr.to_string);
-      let _send packet = packet |>
-        Tundev.Packet.destination |>
-        Resolve.resolve resolver |> function
-        | None -> return (printf "No destination for %s\n%!"
-            (Tundev.Packet.destination packet |>
-            Unix.Inet_addr.inet4_addr_of_int32 |>
-            Unix.Inet_addr.to_string))
-        | Some d -> begin
-          let addr = Resolve.Destination.to_inet d in
-          Tunnel.Txer.send_buf txer addr iobuf
-        end
-      in
-      _send packet >>| fun () ->
-      resolver
-    end
-  ] >>= fun resolver ->
+      | `Ok resolver -> `New_resolver resolver);
+    choice (Tundev.read_packet dev) (fun x -> `Packet x)
+  ] >>= (function
+  | `New_resolver resolver -> return resolver
+  | `Packet packet -> (
+    let iobuf = Iobuf.of_string (Tundev.Packet.raw packet) in
+    printf "Got packet for %s\n%!"
+      (packet |> Tundev.Packet.destination |>
+      Unix.Inet_addr.inet4_addr_of_int32 |>
+      Unix.Inet_addr.to_string);
+    let _send packet = packet |>
+      Tundev.Packet.destination |>
+      Resolve.resolve resolver |> function
+      | None -> return (printf "No destination for %s\n%!"
+          (Tundev.Packet.destination packet |>
+          Unix.Inet_addr.inet4_addr_of_int32 |>
+          Unix.Inet_addr.to_string))
+      | Some d -> begin
+        let addr = Resolve.Destination.to_inet d in
+        Tunnel.Txer.send_buf txer addr iobuf
+      end
+    in
+    _send packet >>| fun () ->
+    resolver)
+  ) >>= fun resolver ->
   handle_outgoing resolver dev txer
 
 let handle_incoming rxer w =
