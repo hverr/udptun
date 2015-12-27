@@ -1,14 +1,20 @@
 open Core.Std
 open Async.Std
 
-let rec handle_outgoing resolver dev txer =
+let rec handle_outgoing ?pending_update ?pending_packet
+                        resolver dev txer =
+  let u = match pending_update with
+  | Some x -> x | None -> (Resolve.update resolver) in
+  let p = match pending_packet with
+  | Some x -> x | None -> (Tundev.read_packet dev) in
   choose [
-    choice (Resolve.update resolver) (function
+    choice u (function
       | `Eof -> raise (Failure "Resolver was closed")
       | `Ok resolver -> `New_resolver resolver);
-    choice (Tundev.read_packet dev) (fun x -> `Packet x)
-  ] >>= (function
-  | `New_resolver resolver -> return resolver
+    choice p (fun x -> `Packet x)
+  ] >>= function
+  | `New_resolver resolver ->
+    handle_outgoing ?pending_packet:(Some p) resolver dev txer
   | `Packet packet -> (
     let iobuf = Iobuf.of_string (Tundev.Packet.raw packet) in
     printf "Got packet for %s\n%!"
@@ -27,10 +33,9 @@ let rec handle_outgoing resolver dev txer =
         Tunnel.Txer.send_buf txer addr iobuf
       end
     in
-    _send packet >>| fun () ->
-    resolver)
-  ) >>= fun resolver ->
-  handle_outgoing resolver dev txer
+    _send packet >>= fun () ->
+    handle_outgoing ?pending_update:(Some u) resolver dev txer
+  )
 
 let handle_incoming rxer w =
   let f buf addr = Writer.write w (Iobuf.to_string buf) in
