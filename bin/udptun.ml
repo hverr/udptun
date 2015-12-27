@@ -24,10 +24,23 @@ let rec handle_outgoing ?pending_update ?pending_packet
     let _send packet = packet |>
       Tundev.Packet.destination |>
       Resolve.resolve resolver |> function
-      | None -> return (printf "No destination for %s\n%!"
+      | None -> begin
+        printf "No destination for %s\n%!"
           (Tundev.Packet.destination packet |>
           Unix.Inet_addr.inet4_addr_of_int32 |>
-          Unix.Inet_addr.to_string))
+          Unix.Inet_addr.to_string);
+        let icmp =
+          Icmp.(destination_host_unreachable packet |> to_bitstring) |>
+          Bitstring.string_of_bitstring
+        in
+        let dst = Tundev.Packet.source packet in
+        let src = Tundev.Packet.destination packet in
+        let ip_packet =
+          Ip.V4.(create Ip.Icmp ~src ~dst icmp |> to_bitstring) |>
+          Bitstring.string_of_bitstring
+        in
+        return (Writer.write (Tundev.writer dev) ip_packet)
+      end
       | Some d -> begin
         let addr = Resolve.Destination.to_inet d in
         Tunnel.Txer.send_packet txer addr iobuf
