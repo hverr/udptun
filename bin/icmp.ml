@@ -20,7 +20,18 @@ let int_of_code = function
   | Destination_host_unreachable -> 1
 
 let create packet_type code body =
+  let packet_type = int_of_packet_type packet_type in
+  let code = int_of_code code in
   {packet_type; code; chksum = 0; body}
+
+let destination_host_unreachable packet =
+  let ip_raw = Tundev.Packet.raw packet in
+  let ip_len = min 28 (String.length ip_raw) in
+  let ip_body = String.sub ip_raw 0 ip_len in
+  let first_32 = String.create 4 in
+  String.fill first_32 ~pos:0 ~len:4 (Char.of_int_exn 0);
+  let body = first_32 ^ ip_body in
+  create Destination_unreachable Destination_host_unreachable body
 
 let to_bitstring t =
   let open Bitstring in
