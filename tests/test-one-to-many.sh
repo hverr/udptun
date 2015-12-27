@@ -29,13 +29,15 @@ IP3=$(docker inspect udptun3 | jq -r ".[0].NetworkSettings.IPAddress")
 
 # Configure hosts file
 function setup_hosts {
-  s=$(cat <<EOF
-export IP1="$IP1"
-export IP2="$IP2"
-export IP3="$IP3"
-/etc/udptun/genhosts.json.sh > /etc/udptun/hosts.json
-EOF)
-  docker exec "$1" /bin/bash -c "$s"
+  docker exec -i "$1" /bin/bash -c 'cat > /etc/udptun/hosts.json' <<EOF
+{
+  "nodes" : {
+    "192.168.111.1" : { "host" : "$IP1" },
+    "192.168.111.2" : { "host" : "$IP2" },
+    "192.168.111.3" : { "host" : "$IP3" }
+  }
+}
+EOF
 }
 setup_hosts udptun1
 setup_hosts udptun2
