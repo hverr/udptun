@@ -55,6 +55,7 @@ sleep 1
 # Configure network devices
 docker exec udptun1 ifconfig udptun 192.168.111.1 netmask 255.255.255.0
 docker exec udptun2 ifconfig udptun 192.168.111.2 netmask 255.255.255.0
+docker exec udptun3 ifconfig udptun 192.168.111.3 netmask 255.255.255.0
 
 # Ping!
 docker exec udptun2 ping -W 1 -c 3 192.168.111.1
