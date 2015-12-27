@@ -33,7 +33,7 @@ let destination_host_unreachable packet =
   let body = first_32 ^ ip_body in
   create Destination_unreachable Destination_host_unreachable body
 
-let to_bitstring t =
+let raw_to_bitstring t =
   let open Bitstring in
   let buf = Buffer.create () in
   let e = Failure "Can't create bitstring" in
@@ -44,11 +44,11 @@ let to_bitstring t =
   Buffer.contents buf
 
 let calc_chksum t =
-  let bs = to_bitstring t in
+  let bs = raw_to_bitstring t in
   let str = Bitstring.string_of_bitstring bs in
   let cstr = Cstruct.of_string str in
   let chksum = Tcpip_checksum.ones_complement cstr in
   { t with chksum }
 
-let chksum_and_bitstring t =
-  {t with chksum = 0} |> calc_chksum |> to_bitstring
+let to_bitstring t =
+  {t with chksum = 0} |> calc_chksum |> raw_to_bitstring
