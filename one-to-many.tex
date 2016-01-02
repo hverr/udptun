@@ -1,0 +1,25 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+
+\graphicspath{{icons/}}
+
+\usetikzlibrary{positioning,shapes}
+\tikzstyle{tun} = [text width=5cm, align=center]
+\tikzstyle{link} = [draw]
+
+\begin{document}
+\begin{tikzpicture}[node distance=3cm]
+
+\node[label=vsp1.example.org] (server1) {\includegraphics{ibm_tower}};
+\node[label=center:Internet, right=of server1] (internet) {\includegraphics{cloud}} edge node[above] {UDP traffic} (server1);
+\node[label=right:vps2.example.org, above right=of internet] (server2) {\includegraphics{ibm_tower}} edge node[left] {UDP traffic} (internet);
+\node[label=right:vps3.example.org, below right=of internet] (server3) {\includegraphics{ibm_tower}} edge node[left] {UDP traffic} (internet);
+
+\node[tun, below=0.2cm of server1] {\tt udptun:\\192.168.100.1};
+\node[tun, below=0.2cm of server2] {\tt udptun:\\192.168.100.2};
+\node[tun, below=0.2cm of server3] {\tt udptun:\\192.168.100.3};
+
+\end{tikzpicture}
+\end{document}
