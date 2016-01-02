@@ -14,6 +14,8 @@ Tunnel IPv4 packets over UDP in user space. Useful for older kernels that do not
     - Static virtual IP to real IP lookup using a json file
   - One-to-one tunneling
     - Virtual IP to real IP using command line flag
+  - Tunnel gateway
+    - Use one tunnel gateway to connect multiple subnets
   - User space
     - Only needs `NET_ADMIN` capability
     - Uses [`/dev/net/tun`][ocaml-tuntap] to create a virtual TUN interface
@@ -80,6 +82,29 @@ PING 192.168.100.3 56(84) bytes of data.
 [...]
 ```
 
+## Tunnel Gateway
+![Tunnel gateway layout][tunnel-gateway-layout]
+
+```sh
+# On s1.example.org, s2.example.org and s3.example.org
+s1$ ifconfig eth0 192.168.100.10 netmask 255.255.255.248
+s2$ ifconfig eth0 192.168.100.11 netmask 255.255.255.248
+s3$ ifconfig eth0 192.168.100.12 netmask 255.255.255.248
+s1$ route add -net 192.168.100.0 gw 192.168.100.9
+s2$ route add -net 192.168.100.0 gw 192.168.100.9
+s3$ route add -net 192.168.100.0 gw 192.168.100.9
+
+# On the gateway (with public IP on eth1 already configured)
+gw$ sysctl -w net.ipv4.ip_forward=1
+gw$ ifconfig eth0 192.168.100.9 netmask 255.255.255.248
+gw$ udptun -A 8.8.4.4 -d udptun
+gw$ ifconfig udptun 192.168.100.1 netmask 255.255.255.248
+
+# On the right most server (with public IP on eth0 already configured)
+gw$ udptun -A 8.8.8.8 -d udptun
+gw$ ifconfig udptun 192.168.100.2 netmask 255.255.255.248
+```
+
 ## Security
 `udptun` does not provide any authentication or confidentiality. Anyone can e.g. claim to be `192.168.100.2` and send spoofed packets to a machine.
 
@@ -112,3 +137,4 @@ Now you can run `make` to build the project.
 
 
  [one-to-many-layout]: https://git.zelus.deliquus.com/henri/ocaml-udptun/raw/docs/one-to-many.png
+ [tunnel-gateway-layout]: https://git.zelus.deliquus.com/henri/ocaml-udptun/raw/docs/tunnel-gateway.png
