@@ -91,9 +91,9 @@ PING 192.168.100.3 56(84) bytes of data.
 s1$ ifconfig eth0 192.168.100.10 netmask 255.255.255.248
 s2$ ifconfig eth0 192.168.100.11 netmask 255.255.255.248
 s3$ ifconfig eth0 192.168.100.12 netmask 255.255.255.248
-s1$ route add -net 192.168.100.0 gw 192.168.100.9
-s2$ route add -net 192.168.100.0 gw 192.168.100.9
-s3$ route add -net 192.168.100.0 gw 192.168.100.9
+s1$ route add -net 192.168.100.0/29 gw 192.168.100.9
+s2$ route add -net 192.168.100.0/29 gw 192.168.100.9
+s3$ route add -net 192.168.100.0/29 gw 192.168.100.9
 
 # On the gateway (with public IP on eth1 already configured)
 gw$ sysctl -w net.ipv4.ip_forward=1
@@ -102,8 +102,9 @@ gw$ udptun -A 8.8.4.4 -d udptun
 gw$ ifconfig udptun 192.168.100.1 netmask 255.255.255.248
 
 # On the right most server (with public IP on eth0 already configured)
-gw$ udptun -A 8.8.8.8 -d udptun
-gw$ ifconfig udptun 192.168.100.2 netmask 255.255.255.248
+right$ udptun -A 8.8.8.8 -d udptun
+right$ ifconfig udptun 192.168.100.2 netmask 255.255.255.248
+right$ route add -net 192.168.100.8/29 gw 192.168.100.1
 ```
 
 ## Security
