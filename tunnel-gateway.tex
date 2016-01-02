@@ -34,6 +34,6 @@
 % SUBNET 2
 \node[right=of internet] (other) {\includegraphics{ibm_tower}} edge node[above] {UDP} node[above,pos=0.1] {\tt eth0} (internet);
 \node[tun, below=0.1cm of other] (other-eth0) {\tt eth0: 8.8.4.4};
-\node[tun, below=0.1cm of other-eth0] {\tt eth0:\\192.168.100.2/29\\mask 255.255.255.248};
+\node[tun, below=0.1cm of other-eth0] {\tt udptun:\\192.168.100.2/29\\mask 255.255.255.248};
 \end{tikzpicture}
 \end{document}
