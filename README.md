@@ -44,6 +44,7 @@ rtt min/avg/max/mdev = 14.571/14.571/14.571/0.000 ms
 ```
 
 ## Static One-to-Many Example
+![One-to-many layout][one-to-many-layout]
 
 ```sh
 $ cat hosts.json
@@ -107,3 +108,7 @@ $ opam pin add -k git ppx_bitstring https://github.com/hverr/ppx_bitstring
 ```
 
 Now you can run `make` to build the project.
+
+
+
+ [one-to-many-layout]: https://git.zelus.deliquus.com/henri/ocaml-udptun/raw/docs/one-to-many.png
