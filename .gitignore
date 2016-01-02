@@ -1,0 +1,8 @@
+# Vim
+.*.sw[a-z]
+
+# LaTex
+*.log
+*.aux
+*-eps-converted-to.pdf
+*.pdf
