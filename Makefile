@@ -1,7 +1,8 @@
 .PHONY: all
 
 PNG_TARGETS=\
-	one-to-many.png
+	one-to-many.png\
+	tunnel-gateway.png
 
 PDF_TARGETS=$(PNG_TARGETS:.png=.pdf)
 

@@ -1,0 +1,39 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+
+\graphicspath{{icons/}}
+
+\usetikzlibrary{positioning,shapes}
+\tikzstyle{tun} = [text width=5cm, align=center]
+\tikzstyle{link} = [draw]
+
+\begin{document}
+\begin{tikzpicture}[node distance=3cm]
+% SUBNET 1
+\node[label=s1.example.org] (s1) {\includegraphics{ibm_tower}};
+\node[label=s2.example.org, below=1.5cm of s1] (s2) {\includegraphics{ibm_tower}};
+\node[label=s3.example.org, below=1.5cm of s2] (s3) {\includegraphics{ibm_tower}};
+\node[label=Switch, right=of s2] (switch) {\includegraphics{workgroup_switch}};
+\node[label=Tunnel Gateway, right=of switch] (gw) {\includegraphics{server_with_router}} edge node[above] {IP} node[above,pos=0.1] {\tt eth0} (switch);
+\draw[link] (s1) -- node[right] {IP} node[right,pos=0] {\tt eth0} (switch);
+\draw[link] (s2) -- node[above] {IP} node[above,pos=0.1] {\tt eth0} (switch);
+\draw[link] (s3) -- node[right] {IP} node[right,pos=0] {\tt eth0} (switch);
+
+\node[tun, left=0.1cm of s1] {\tt eth0:\\192.168.100.10/29\\mask 255.255.255.248};
+\node[tun, left=0.1cm of s2] {\tt eth0:\\192.168.100.11/29\\mask 255.255.255.248};
+\node[tun, left=0.1cm of s3] {\tt eth0:\\192.168.100.12/29\\mask 255.255.255.248};
+\node[tun, below=0.1cm of gw] (gw-eth0) {\tt eth0:\\192.168.100.9/29\\mask 255.255.255.248};
+\node[tun, below=0.1cm of gw-eth0] (gw-udptun) {\tt udptun:\\192.168.100.1/29\\ mask 255.255.255.248};
+\node[tun, below=0.1cm of gw-udptun] {\tt eth1: 8.8.8.8};
+
+% INTERNET
+\node[label=center:Internet, right=of gw] (internet) {\includegraphics{cloud}} edge node[above] {UDP} node[above,pos=0.9] {\tt eth1} (gw);
+
+% SUBNET 2
+\node[right=of internet] (other) {\includegraphics{ibm_tower}} edge node[above] {UDP} node[above,pos=0.1] {\tt eth0} (internet);
+\node[tun, below=0.1cm of other] (other-eth0) {\tt eth0: 8.8.4.4};
+\node[tun, below=0.1cm of other-eth0] {\tt eth0:\\192.168.100.2/29\\mask 255.255.255.248};
+\end{tikzpicture}
+\end{document}
