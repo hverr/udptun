@@ -10,15 +10,16 @@ Tunnel IPv4 packets over UDP in user space. Useful for older kernels that do not
 
   - IPsec behind NAT
   - One-to-many tunneling
-    - Dynamic virtual IP to real IP lookup using HTTPS
+    - **Dynamic virtual IP to real IP lookup using HTTPS**
     - Static virtual IP to real IP lookup using a json file
   - One-to-one tunneling
     - Virtual IP to real IP using command line flag
   - Tunnel gateway
-    - Use one tunnel gateway to connect multiple subnets
+    - Use one tunnel gateway to interconnect multiple subnets
   - User space
     - Only needs `NET_ADMIN` capability
     - Uses [`/dev/net/tun`][ocaml-tuntap] to create a virtual TUN interface
+  - [Examples](tests)
 
   [ocaml-tuntap]: https://github.com/mirage/ocaml-tuntap
 
