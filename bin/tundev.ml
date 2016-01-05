@@ -46,20 +46,20 @@ let _read_ipv4 t hd =
       let r = total_length - (Bitstring.bitstring_length hd)/8 in
       let body = String.create r in
       Reader.really_read t.reader body >>| function
-      | `Eof _ -> raise (Failure "EOF")
+      | `Eof _ -> failwith "EOF"
       | `Ok ->
         let full = (Bitstring.string_of_bitstring hd) ^ body in
         Packet.create source dest full
     end
-  | {| _ |} -> raise (Failure "Could not read IPv4 packet")
+  | {| _ |} -> failwith "Could not read IPv4 packet"
 
 let read_packet t =
   let str = String.create 20 in
   Reader.really_read t.reader str >>= function
-  | `Eof _ -> raise (Failure "EOF")
+  | `Eof _ -> failwith "EOF"
   | `Ok -> begin
     let bs = Bitstring.bitstring_of_string str in
     match%bitstring bs with
     | {| v : 4 |} when v = 4 -> _read_ipv4 t bs
-    | {| _ |} -> raise (Failure "Could not read IP packet")
+    | {| _ |} -> failwith "Could not read IP packet"
   end

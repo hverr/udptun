@@ -9,7 +9,7 @@ let rec handle_outgoing ?pending_update ?pending_packet
   | Some x -> x | None -> (Tundev.read_packet dev) in
   choose [
     choice u (function
-      | `Eof -> raise (Failure "Resolver was closed")
+      | `Eof -> failwith "Resolver was closed"
       | `Ok resolver -> `New_resolver resolver);
     choice p (fun x -> `Packet x)
   ] >>= function
@@ -67,8 +67,8 @@ let setup_resolver ~remote_host ~remote_port
   | (None, None, Some url)  ->
     let interval = Time.Span.of_sec hosts_url_interval in
     Resolve.from_url ~interval ~ca_file ~ca_path url
-  | _ -> raise (Failure ("You must choose exactly one method to " ^
-                         "resolve destinations."))
+  | _ -> failwith ("You must choose exactly one method to " ^
+                   "resolve destinations.")
 
 let main local_address local_port
          remote_host remote_port

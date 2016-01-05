@@ -22,7 +22,7 @@ module Destination = struct
     let open Unix.Host in
     getbyname_exn host >>| fun entry ->
     match Array.length entry.addresses with
-    | 0 -> raise (Failure ("No host with name " ^ host))
+    | 0 -> failwith ("No host with name " ^ host)
     | _ -> create (Array.get entry.addresses 0) port
 
   let of_json json =
@@ -51,8 +51,8 @@ let fetch ~ca_file ~ca_path url =
   Client.get ~ssl_config (Uri.of_string url) >>= fun (r, b) ->
     match r |> Response.status |> Code.code_of_status with
     | 200 -> Body.to_string b
-    | status -> raise (Failure
-        (sprintf "Could not fetch %s: HTTP %d" url status))
+    | status -> failwith
+      (sprintf "Could not fetch %s: HTTP %d" url status)
 
 let parse str =
   let json = Yojson.Basic.from_string str in
