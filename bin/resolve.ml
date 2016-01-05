@@ -43,8 +43,12 @@ type t = {
 
 let wildcard = Int32.zero
 
-let fetch url =
-  Client.get (Uri.of_string url) >>= fun (r, b) ->
+let fetch ~ca_file ~ca_path url =
+  let ssl_config =
+    let open Conduit_async in
+    Ssl.(configure ?ca_file ?ca_path ~verify:verify_certificate ())
+  in
+  Client.get ~ssl_config (Uri.of_string url) >>= fun (r, b) ->
     match r |> Response.status |> Code.code_of_status with
     | 200 -> Body.to_string b
     | status -> raise (Failure
@@ -63,8 +67,8 @@ let parse str =
   Deferred.all dests >>|
   List.map2_exn resolver ~f:(fun (x, _) y -> (x, y))
 
-let fetch_all url =
-  fetch url >>= parse
+let fetch_all ~ca_file ~ca_path url =
+  fetch url ~ca_file ~ca_path >>= parse
 
 let from_host host port =
   let updater, _ = Pipe.create () in
@@ -76,21 +80,21 @@ let from_file filename =
   Reader.file_contents filename >>= parse >>| fun hosts ->
   { hosts; updater }
 
-let rec start_fetching t ~interval url w =
-  try_with (fun () -> fetch_all url) >>= (function
+let rec start_fetching t ~interval ~ca_file ~ca_path url w =
+  try_with (fun () -> fetch_all ~ca_file ~ca_path url) >>= (function
   | Error e ->
     return (printf "Could not fetch %s: %s\n" url
       (Exn.to_string e))
   | Ok hosts -> Pipe.write w {t with hosts}
   ) >>= fun () ->
   after interval >>= fun () ->
-  start_fetching t ~interval url w
+  start_fetching t ~interval ~ca_file ~ca_path url w
 
-let from_url ~interval url =
+let from_url ~interval ~ca_file ~ca_path url =
   let updater, w = Pipe.create () in
-  fetch_all url >>| fun hosts ->
+  fetch_all ~ca_file ~ca_path url >>| fun hosts ->
   let t = {hosts; updater } in
-  ignore (start_fetching t ~interval url w); t
+  ignore (start_fetching t ~interval ~ca_file ~ca_path url w); t
 
 let resolve t ipv4 =
   match List.find t.hosts ~f:(fun (x, _) -> x = wildcard || ipv4 = x) with

@@ -60,13 +60,13 @@ let addr_to_inet ip port =
 
 let setup_resolver ~remote_host ~remote_port
                    ~hosts_file
-                   ~hosts_url ~hosts_url_interval =
+                   ~hosts_url ~hosts_url_interval ~ca_file ~ca_path =
   match (remote_host, hosts_file, hosts_url) with
   | (Some host, None, None) -> Resolve.from_host host remote_port
   | (None, Some file, None) -> Resolve.from_file file
   | (None, None, Some url)  ->
-    let i = Time.Span.of_sec hosts_url_interval in
-    Resolve.from_url i url
+    let interval = Time.Span.of_sec hosts_url_interval in
+    Resolve.from_url ~interval ~ca_file ~ca_path url
   | _ -> raise (Failure ("You must choose exactly one method to " ^
                          "resolve destinations."))
 
@@ -81,7 +81,7 @@ let test_https () =
 let main local_address local_port
          remote_host remote_port
          hosts_file
-         hosts_url hosts_url_interval
+         hosts_url hosts_url_interval ca_file ca_path
          dev =
   let tundev = Tundev.create dev in
   Core.Std.printf "Created device %s\n%!" (Tundev.name tundev);
@@ -95,13 +95,13 @@ let main local_address local_port
   let start_sending () =
     setup_resolver ~remote_host ~remote_port
                    ~hosts_file
-                   ~hosts_url ~hosts_url_interval
+                   ~hosts_url ~hosts_url_interval ~ca_file ~ca_path
     >>= fun resolver ->
     let txer = Tunnel.Txer.create () in
     handle_outgoing resolver tundev txer
   in
-  (*ignore (start_receiving ());
-  ignore (start_sending ());*)
+  ignore (start_receiving ());
+  ignore (start_sending ());
   ignore (test_https ());
 
   never_returns (Scheduler.go ())

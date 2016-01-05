@@ -39,6 +39,20 @@ let hosts_url_interval =
   let flags = ["hosts-url-interval"] in
   Arg.(value & opt float 300.0 & info flags ~env ~doc)
 
+let ca_file =
+  let doc = "CA file directly passed to OpenSSL (note that " ^
+            "hostnames are NOT checked)." in
+  let env = Arg.env_var "CA_FILE" ~doc in
+  let flags = ["ca-file"] in
+  Arg.(value & opt (some string) None & info flags ~env ~doc)
+
+let ca_path =
+  let doc = "CA path directly passed to OpenSSL (note that " ^
+            "hostnames are NOT checked)." in
+  let env = Arg.env_var "CA_PATH" ~doc in
+  let flags = ["ca-path"] in
+  Arg.(value & opt (some string) None & info flags ~env ~doc)
+
 let device =
   let doc = "The name of the created tun device." in
   let flags = ["d"; "device"] in
@@ -48,7 +62,7 @@ let term m = Term.(const m $
                    local_address $ local_port $
                    remote_host $ remote_port $
                    hosts_file $
-                   hosts_url $ hosts_url_interval $
+                   hosts_url $ hosts_url_interval $ ca_file $ ca_path $
                    device)
 
 let info =
