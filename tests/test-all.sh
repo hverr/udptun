@@ -16,4 +16,4 @@ run "./test-one-to-many.sh"
 run "./test-one-to-one-hosts-url.sh"
 run "./test-one-to-many-hosts-url.sh"
 run "./test-destination-host-unreachable.sh"
-run "./test-tunnel-gateway.sh
+run "./test-tunnel-gateway.sh"
