@@ -70,14 +70,6 @@ let setup_resolver ~remote_host ~remote_port
   | _ -> raise (Failure ("You must choose exactly one method to " ^
                          "resolve destinations."))
 
-let test_https () =
-  let open Cohttp in
-  let open Cohttp_async in
-  Client.get (Uri.of_string "https://git.zelus.deliquus.com") >>| function
-  | (r, b) -> r |> Response.status |> Code.code_of_status
-                |> printf "Got %d\n%!"
-
-
 let main local_address local_port
          remote_host remote_port
          hosts_file
@@ -102,7 +94,6 @@ let main local_address local_port
   in
   ignore (start_receiving ());
   ignore (start_sending ());
-  ignore (test_https ());
 
   never_returns (Scheduler.go ())
 
