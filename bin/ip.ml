@@ -78,8 +78,10 @@ module V4 = struct
          default_body : -1 : bitstring
       |} -> begin
         let open Bitstring in
-        let default_body = string_of_bitstring default_body in
-        let body = Option.value body ~default:default_body in
+        let body = match body with
+          | None -> string_of_bitstring default_body
+          | Some body -> body
+        in
         match String.length body with
         | x when x = total_length - 20 ->
           { dscp; ecn; identification; flags; offset; ttl;
