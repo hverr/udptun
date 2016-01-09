@@ -1,4 +1,5 @@
 open Core.Std
+open Async.Std
 
 type protocol =
   | Icmp
@@ -59,4 +60,52 @@ module V4 = struct
     let t = { t with chksum = 0 } in
     let h = t |> calc_chksum |> header_to_bitstring in
     Bitstring.(concat [h; (bitstring_of_string t.body)])
+
+  let of_bitstring ?body bs =
+    match%bitstring bs with
+    | {| _ : 8; (* version and IHL *)
+         dscp : 6;
+         ecn : 2;
+         total_length : 16 : bigendian;
+         identification : 16 : bigendian;
+         flags : 3;
+         offset : 13 : bigendian;
+         ttl : 8;
+         protocol : 8;
+         chksum : 16 : bigendian;
+         src : 32 : bigendian;
+         dst : 32 : bigendian;
+         default_body : -1 : bitstring
+      |} -> begin
+        let open Bitstring in
+        let default_body = string_of_bitstring default_body in
+        let body = Option.value body ~default:default_body in
+        match String.length body with
+        | x when x = total_length - 20 ->
+          { dscp; ecn; identification; flags; offset; ttl;
+            protocol; chksum; src; dst; body }
+        | _ -> failwith "The IPv4 packet was too short"
+      end
+    | {| _ |} -> failwith "Could not read IPv4 packet"
+
+  let read r =
+    let str = String.create 20 in
+    Reader.really_read r str >>= function
+    | `Eof _ -> failwith "EOF"
+    | `Ok -> begin
+      let bs = Bitstring.bitstring_of_string str in
+      match%bitstring bs with
+      | {| 4 : 4; _ : 12; len : 16 : bigendian |} -> begin
+          let body_len = len - 20 in
+          match body_len with
+          | x when x >= 0 -> begin
+            let body = String.create body_len in
+            Reader.really_read r body >>| function
+            | `Eof _ -> failwith "EOF"
+            | `Ok -> of_bitstring ~body bs
+          end
+          | x -> failwith "Invalid IPv4 packet length."
+        end
+      | {| _ |} -> failwith "Could not read IPv4 packet."
+    end
 end

@@ -34,32 +34,8 @@ let name t = t.name
 
 let close t = Tuntap.closetun t.name
 
-let _read_ipv4 t hd =
-  match%bitstring hd with
-  | {|
-      _ : 16;
-      total_length : 16 : bigendian;
-      _ : 64;
-      source : 32 : bigendian;
-      dest : 32 : bigendian
-    |} -> begin
-      let r = total_length - (Bitstring.bitstring_length hd)/8 in
-      let body = String.create r in
-      Reader.really_read t.reader body >>| function
-      | `Eof _ -> failwith "EOF"
-      | `Ok ->
-        let full = (Bitstring.string_of_bitstring hd) ^ body in
-        Packet.create source dest full
-    end
-  | {| _ |} -> failwith "Could not read IPv4 packet"
-
 let read_packet t =
-  let str = String.create 20 in
-  Reader.really_read t.reader str >>= function
-  | `Eof _ -> failwith "EOF"
-  | `Ok -> begin
-    let bs = Bitstring.bitstring_of_string str in
-    match%bitstring bs with
-    | {| v : 4 |} when v = 4 -> _read_ipv4 t bs
-    | {| _ |} -> failwith "Could not read IP packet"
-  end
+  let open Ip.V4 in
+  read t.reader >>| fun p ->
+  let raw = p |> to_bitstring |> Bitstring.string_of_bitstring in
+  Packet.create p.src p.dst raw
