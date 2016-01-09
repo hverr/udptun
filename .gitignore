@@ -10,3 +10,6 @@ _build/
 # Oasis
 setup.data
 setup.log
+
+# Build
+deb/*.deb
