@@ -1,6 +1,35 @@
 open Core.Std
 open Async.Std
 
+let _send_destination_host_unreachable w packet =
+  let dst = Tundev.Packet.source packet in
+  let src = Tundev.Packet.destination packet in
+  return (
+  packet |> Icmp.destination_host_unreachable
+         |> Icmp.to_bitstring
+         |> Bitstring.string_of_bitstring
+         |> Ip.V4.create Ip.Icmp ~src ~dst
+         |> Ip.V4.to_bitstring
+         |> Bitstring.string_of_bitstring
+         |> Writer.write w
+  )
+
+let _send resolver txer dev packet =
+  packet |> Tundev.Packet.destination
+         |> Resolve.resolve resolver
+         |> function
+  | None -> begin
+    printf "No destiantion for %s\n%!"
+      (packet |> Tundev.Packet.destination
+              |> Unix.Inet_addr.inet4_addr_of_int32
+              |> Unix.Inet_addr.to_string);
+    _send_destination_host_unreachable (Tundev.writer dev) packet
+  end
+  | Some d ->
+    let addr = Resolve.Destination.to_inet d in
+    let iobuf = packet |> Tundev.Packet.raw |> Iobuf.of_string in
+    Tunnel.Txer.send_packet txer addr iobuf
+
 let rec handle_outgoing ?pending_update ?pending_packet
                         resolver dev txer =
   let u = match pending_update with
@@ -15,36 +44,10 @@ let rec handle_outgoing ?pending_update ?pending_packet
   ] >>= function
   | `New_resolver resolver ->
     handle_outgoing ?pending_packet:(Some p) resolver dev txer
-  | `Packet packet -> (
-    let iobuf = Iobuf.of_string (Tundev.Packet.raw packet) in
-    let _send packet = packet |>
-      Tundev.Packet.destination |>
-      Resolve.resolve resolver |> function
-      | None -> begin
-        printf "No destination for %s\n%!"
-          (Tundev.Packet.destination packet |>
-          Unix.Inet_addr.inet4_addr_of_int32 |>
-          Unix.Inet_addr.to_string);
-        let icmp =
-          Icmp.(destination_host_unreachable packet |> to_bitstring) |>
-          Bitstring.string_of_bitstring
-        in
-        let dst = Tundev.Packet.source packet in
-        let src = Tundev.Packet.destination packet in
-        let ip_packet =
-          Ip.V4.(create Ip.Icmp ~src ~dst icmp |> to_bitstring) |>
-          Bitstring.string_of_bitstring
-        in
-        return (Writer.write (Tundev.writer dev) ip_packet)
-      end
-      | Some d -> begin
-        let addr = Resolve.Destination.to_inet d in
-        Tunnel.Txer.send_packet txer addr iobuf
-      end
-    in
-    _send packet >>= fun () ->
+  | `Packet packet -> begin
+    _send resolver txer dev packet >>= fun () ->
     handle_outgoing ?pending_update:(Some u) resolver dev txer
-  )
+  end
 
 let handle_incoming rxer w =
   let f buf addr =
