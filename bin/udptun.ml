@@ -51,7 +51,17 @@ let rec handle_outgoing ?pending_update ?pending_packet
   )
 
 let handle_incoming rxer w =
-  let f buf addr = Writer.write w (Iobuf.to_string buf) in
+  let f buf addr =
+    ignore (
+      try_with (fun () -> return (Writer.write w (Iobuf.to_string buf)))
+      >>| function
+      | Ok _ -> ()
+      | Error _ -> begin
+        let from = Socket.Address.Inet.to_string addr in
+        printf "Kernel rejected packet from %s\n%!" from
+      end
+    )
+  in
   Tunnel.Rxer.start rxer f
 
 let addr_to_inet ip port =
