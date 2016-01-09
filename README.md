@@ -138,5 +138,5 @@ Now you can run `make` to build the project.
 
 
 
- [one-to-many-layout]: https://git.zelus.deliquus.com/henri/ocaml-udptun/raw/docs/one-to-many.png
- [tunnel-gateway-layout]: https://git.zelus.deliquus.com/henri/ocaml-udptun/raw/docs/tunnel-gateway.png
+ [one-to-many-layout]: https://github.com/hverr/udptun/blob/docs/one-to-many.png
+ [tunnel-gateway-layout]: https://github.com/hverr/udptun/blob/docs/tunnel-gateway.png
