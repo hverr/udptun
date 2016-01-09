@@ -51,7 +51,19 @@ let rec handle_outgoing ?pending_update ?pending_packet
   )
 
 let handle_incoming rxer w =
-  let f buf addr = Writer.write w (Iobuf.to_string buf) in
+  let f buf addr =
+    let str = Iobuf.to_string buf in
+    let bs = Bitstring.bitstring_of_string str in
+    try
+      let _ = Ip.V4.of_bitstring bs  in
+      Writer.write w (Iobuf.to_string buf)
+    with
+    | e ->
+      printf "Received an invalid IPv4 packet from %s: %s (%s)\n%!"
+        (Socket.Address.Inet.to_string addr)
+        (Exn.to_string e)
+        Iobuf.(to_string_hum ~bounds:`Window buf)
+  in
   Tunnel.Rxer.start rxer f
 
 let addr_to_inet ip port =

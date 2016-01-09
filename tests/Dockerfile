@@ -7,7 +7,9 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     libssl1.0.0 \
     iproute2 \
-    ipsec-tools
+    ipsec-tools \
+    netcat \
+    vim-common # provides xxd
 
 ADD udptun /usr/local/bin/udptun
 RUN chmod 0755 /usr/local/bin/udptun
