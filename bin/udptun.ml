@@ -17,10 +17,6 @@ let rec handle_outgoing ?pending_update ?pending_packet
     handle_outgoing ?pending_packet:(Some p) resolver dev txer
   | `Packet packet -> (
     let iobuf = Iobuf.of_string (Tundev.Packet.raw packet) in
-    printf "Got packet for %s\n%!"
-      (packet |> Tundev.Packet.destination |>
-      Unix.Inet_addr.inet4_addr_of_int32 |>
-      Unix.Inet_addr.to_string);
     let _send packet = packet |>
       Tundev.Packet.destination |>
       Resolve.resolve resolver |> function
