@@ -84,7 +84,7 @@ module V4 = struct
         | x when x = total_length - 20 ->
           { dscp; ecn; identification; flags; offset; ttl;
             protocol; chksum; src; dst; body }
-        | _ -> failwith "The IPv4 packet was too short"
+        | _ -> failwith "The IPv4 packet length did not match"
       end
     | {| _ |} -> failwith "Could not read IPv4 packet"
 
