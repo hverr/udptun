@@ -1,7 +1,7 @@
 .PHONY: all container
 
 CONTAINER_NAME=udptun_deb
-VERSION=0.1
+VERSION=0.1-beta
 
 ARCH=$(shell uname -m)
 
