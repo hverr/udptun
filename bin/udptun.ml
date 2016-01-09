@@ -19,7 +19,7 @@ let _send resolver txer dev packet =
          |> Resolve.resolve resolver
          |> function
   | None -> begin
-    printf "No destiantion for %s\n%!"
+    printf "No destination for %s\n%!"
       (packet |> Tundev.Packet.destination
               |> Unix.Inet_addr.inet4_addr_of_int32
               |> Unix.Inet_addr.to_string);
