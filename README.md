@@ -1,3 +1,5 @@
+![build status](https://travis-ci.org/hverr/udptun.svg)
+
 udptun
 ======
 
@@ -128,7 +130,7 @@ $ opam pin add -k git conduit https://github.com/hverr/ocaml-conduit
 $ opam pin add -k git cohttp https://github.com/hverr/ocaml-cohttp
 ```
 
-The project requires a patched version of `ppx_bitstring`
+The project requires `ppx_bitstring`, which is not provided by the standard opam repository.
 
 ```
 $ opam pin add -k git ppx_bitstring https://github.com/xguerin/ppx_bitstring
