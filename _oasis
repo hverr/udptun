@@ -16,5 +16,5 @@ Executable udptun
     MainIs: udptun.ml
     CompiledObject: best
     BuildDepends: cmdliner, core, threads, tuntap, async, async_ssl, cohttp,
-                  cohttp.async, yojson, bitstring, ppx_bitstring.match,
+                  cohttp.async, yojson, bitstring, ppx_bitstring.ext,
                   tcpip, cstruct
