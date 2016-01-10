@@ -1,0 +1,21 @@
+language: c
+sudo: required
+services:
+  - docker
+install: wget https://raw.githubusercontent.com/ocaml/ocaml-travisci-skeleton/master/.travis-ocaml.sh
+script:
+  - sudo apt-get update
+  - sudo apt-get install -y libssl-dev libffi-dev rsync
+  - bash -ex .travis-ocaml.sh
+  - eval $(opam config env)
+  - opam pin add -n -y -k git conduit https://github.com/hverr/ocaml-conduit
+  - opam pin add -n -y -k git cohttp https://github.com/hverr/ocaml-cohttp
+  - opam pin add -n -y -k git ppx_bitstring https://github.com/xguerin/ppx_bitstring
+  - opam install -y core ppx_tools bitstring
+  - opam install -y cmdliner core async async_ssl tuntap conduit cohttp yojson bitstring tcpip cstruct ppx_bitstring
+  - opam install -y oasis
+  - make
+  - cd tests && ./test-all.sh && cd ..
+  - cd deb && make && cd ..
+env:
+  - OCAML_VERSION=4.02
