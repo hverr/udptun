@@ -1,5 +1,5 @@
-ocaml-udptun
-============
+udptun
+======
 
 Tunnel IPv4 packets over UDP in user space. Useful for older kernels that do not include [fou][fou-article].
 
@@ -131,7 +131,7 @@ $ opam pin add -k git cohttp https://github.com/hverr/ocaml-cohttp
 The project requires a patched version of `ppx_bitstring`
 
 ```
-$ opam pin add -k git ppx_bitstring https://github.com/hverr/ppx_bitstring
+$ opam pin add -k git ppx_bitstring https://github.com/xguerin/ppx_bitstring
 ```
 
 Now you can run `make` to build the project.
