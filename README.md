@@ -1,4 +1,4 @@
-![build status](https://travis-ci.org/hverr/udptun.svg)
+[![Build Status](https://travis-ci.org/hverr/udptun.svg?branch=master)](https://travis-ci.org/hverr/udptun)
 
 udptun
 ======
