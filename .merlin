@@ -11,7 +11,7 @@ PKG cohttp
 PKG cohttp.async
 PKG yojson
 PKG bitstring
-PKG ppx_bitstring.match
+PKG ppx_bitstring.ext
 PKG cstruct
 PKG cstruct.syntax
 PKG tcpip

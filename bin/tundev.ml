@@ -35,7 +35,7 @@ let name t = t.name
 let close t = Tuntap.closetun t.name
 
 let read_packet t =
+  Ip.read t.reader >>| fun p ->
   let open Ip.V4 in
-  read t.reader >>| fun p ->
   let raw = p |> to_bitstring |> Bitstring.string_of_bitstring in
   Packet.create p.src p.dst raw
