@@ -43,16 +43,29 @@ type t = {
 
 let wildcard = Int32.zero
 
-let fetch ~ca_file ~ca_path url =
+let rec fetch ?(ttl=10) ~ca_file ~ca_path url =
+  match ttl with
+  | x when x <= 0 ->
+    failwith (sprintf "Could not fetch %s: too many redirects"
+    (Uri.to_string url))
+  | _ ->
+
   let ssl_config =
     let open Conduit_async in
     Ssl.(configure ?ca_file ?ca_path ~verify:verify_certificate ())
   in
-  Client.get ~ssl_config (Uri.of_string url) >>= fun (r, b) ->
+  Client.get ~ssl_config url >>= fun (r, b) ->
     match r |> Response.status |> Code.code_of_status with
-    | 200 -> Body.to_string b
-    | status -> failwith
-      (sprintf "Could not fetch %s: HTTP %d" url status)
+    | c when (Code.is_redirection c) -> begin
+      match r |> Response.headers |> Header.get_location with
+      | Some uri -> fetch ~ttl:(ttl - 1) ~ca_file ~ca_path uri
+      | None -> failwith (sprintf
+        "Could not fetch %s: got HTTP %d but no location header"
+        (Uri.to_string url) c)
+    end
+    | c when (Code.is_success c) -> Body.to_string b
+    | c -> failwith (sprintf "Could not fetch %s: HTTP %d"
+      (Uri.to_string url) c)
 
 let parse str =
   let json = Yojson.Basic.from_string str in
@@ -83,7 +96,7 @@ let from_file filename =
 let rec start_fetching t ~interval ~ca_file ~ca_path url w =
   try_with (fun () -> fetch_all ~ca_file ~ca_path url) >>= (function
   | Error e ->
-    return (printf "Could not fetch %s: %s\n" url
+    return (printf "Could not fetch %s: %s\n" (Uri.to_string url)
       (Exn.to_string e))
   | Ok hosts -> Pipe.write w {t with hosts}
   ) >>= fun () ->
@@ -91,10 +104,11 @@ let rec start_fetching t ~interval ~ca_file ~ca_path url w =
   start_fetching t ~interval ~ca_file ~ca_path url w
 
 let from_url ~interval ~ca_file ~ca_path url =
+  let uri = Uri.of_string url in
   let updater, w = Pipe.create () in
-  fetch_all ~ca_file ~ca_path url >>| fun hosts ->
+  fetch_all ~ca_file ~ca_path uri >>| fun hosts ->
   let t = {hosts; updater } in
-  ignore (start_fetching t ~interval ~ca_file ~ca_path url w); t
+  ignore (start_fetching t ~interval ~ca_file ~ca_path uri w); t
 
 let resolve t ipv4 =
   match List.find t.hosts ~f:(fun (x, _) -> x = wildcard || ipv4 = x) with
