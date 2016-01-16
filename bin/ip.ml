@@ -90,24 +90,49 @@ module V4 = struct
       end
     | {| _ |} -> failwith "Could not read IPv4 packet"
 
-  let read r =
-    let str = String.create 20 in
-    Reader.really_read r str >>= function
-    | `Eof _ -> failwith "EOF"
-    | `Ok -> begin
-      let bs = Bitstring.bitstring_of_string str in
-      match%bitstring bs with
-      | {| 4 : 4; _ : 12; len : 16 : bigendian |} -> begin
-          let body_len = len - 20 in
-          match body_len with
-          | x when x >= 0 -> begin
-            let body = String.create body_len in
-            Reader.really_read r body >>| function
-            | `Eof _ -> failwith "EOF"
-            | `Ok -> of_bitstring ~body bs
-          end
-          | x -> failwith "Invalid IPv4 packet length."
+  let read r hd =
+    match%bitstring hd with
+    | {| 4 : 4; _ : 12; len : 16 : bigendian |} -> begin
+        let body_len = len - 20 in
+        match body_len with
+        | x when x >= 0 -> begin
+          let body = String.create body_len in
+          Reader.really_read r body >>| function
+          | `Eof _ -> failwith "EOF"
+          | `Ok -> of_bitstring ~body hd
         end
-      | {| _ |} -> failwith "Could not read IPv4 packet."
-    end
+        | x -> failwith "Invalid IPv4 packet length."
+      end
+    | {| _ |} -> failwith "Could not read IPv4 packet"
 end
+
+module V6 = struct
+  type t = unit
+
+  let read r hd =
+    match%bitstring hd with
+    | {| 6 : 4; _: 28; length : 16; _ |} -> begin
+      let rem = length + 40 - (Bitstring.bitstring_length hd)/8 in
+      let str = String.create rem in
+      Reader.really_read r str >>| function
+      | `Eof _ -> failwith "EOF"
+      | `Ok -> None
+    end
+    | {| _ |} -> failwith "COuld not read IPv6 packet"
+end
+
+let rec read r =
+  let str = String.create 20 in
+  Reader.really_read r str >>= function
+  | `Eof _ -> failwith "EOF"
+  | `Ok -> begin
+    let bs = Bitstring.bitstring_of_string str in
+    match%bitstring bs with
+    | {| 4 : 4; _ |} -> V4.read r bs
+    | {| 6 : 4; _ |} -> begin
+      V6.read r bs >>= fun _ ->
+      printf "Ignoring IPv6 packet\n%!";
+      read r
+    end
+    | {| _ |} -> failwith "Could not read IP packet"
+  end
