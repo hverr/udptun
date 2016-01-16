@@ -56,7 +56,6 @@ let rec fetch ?(ttl=10) ~ca_file ~ca_path url =
   in
   Client.get ~ssl_config url >>= fun (r, b) ->
     match r |> Response.status |> Code.code_of_status with
-    | c when (Code.is_success c) -> Body.to_string b
     | c when (Code.is_redirection c) -> begin
       match r |> Response.headers |> Header.get_location with
       | Some uri -> fetch ~ttl:(ttl - 1) ~ca_file ~ca_path uri
@@ -64,6 +63,7 @@ let rec fetch ?(ttl=10) ~ca_file ~ca_path url =
         "Could not fetch %s: got HTTP %d but no location header"
         (Uri.to_string url) c)
     end
+    | c when (Code.is_success c) -> Body.to_string b
     | c -> failwith (sprintf "Could not fetch %s: HTTP %d"
       (Uri.to_string url) c)
 
